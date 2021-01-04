@@ -1,0 +1,292 @@
+CREATE SCHEMA "VideoKlub"
+    AUTHORIZATION postgres;
+
+CREATE TABLE "VideoKlub".clanovi
+(
+    id_clana integer NOT NULL,
+    ime character varying(45)[] COLLATE pg_catalog."default",
+    prezime character varying(45)[] COLLATE pg_catalog."default",
+    adresa character varying(45)[] COLLATE pg_catalog."default",
+    br_telefona character varying(45)[] COLLATE pg_catalog."default",
+    email character varying(45)[] COLLATE pg_catalog."default",
+    korisnicko_ime character varying(45)[] COLLATE pg_catalog."default",
+    lozinka character varying(45)[] COLLATE pg_catalog."default",
+    datum_uclanjenja date,
+    "status(aktivan/inaktivan)" character varying(45) COLLATE pg_catalog."default",
+    "videoklub(radnja)_id_radnje" integer,
+    CONSTRAINT clanovi_pkey PRIMARY KEY (id_clana),
+    CONSTRAINT "fk_videoklub_(radnja)" FOREIGN KEY ("videoklub(radnja)_id_radnje")
+        REFERENCES "VideoKlub".videoklub (id_radnje) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".clanovi
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".evidencioni_karton
+(
+    id_kartona integer NOT NULL,
+    clanovi_id_clana integer,
+    tarifa_id_tarife integer,
+    filmovi_id_filma integer,
+    CONSTRAINT evidencioni_karton_pkey PRIMARY KEY (id_kartona),
+    CONSTRAINT fk_clanovi FOREIGN KEY (clanovi_id_clana)
+        REFERENCES "VideoKlub".clanovi (id_clana) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID,
+    CONSTRAINT fk_filmovi FOREIGN KEY (filmovi_id_filma)
+        REFERENCES "VideoKlub".filmovi (id_filma) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID,
+    CONSTRAINT fk_tarifa FOREIGN KEY (tarifa_id_tarife)
+        REFERENCES "VideoKlub".tarife (id_tarife) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".evidencioni_karton
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".filmovi
+(
+    id_filma integer NOT NULL,
+    naziv character varying(45)[] COLLATE pg_catalog."default",
+    godina_izdanja integer,
+    reziser character varying(45)[] COLLATE pg_catalog."default",
+    ocena integer,
+    kratak_opis character varying(100)[] COLLATE pg_catalog."default",
+    jezik character varying(45)[] COLLATE pg_catalog."default",
+    format character varying(5)[] COLLATE pg_catalog."default",
+    duzina_trajanja character varying(45)[] COLLATE pg_catalog."default",
+    "kategorija/zanr_id_kategorije" integer,
+    poslednji_unos timestamp without time zone,
+    CONSTRAINT filmovi_pkey PRIMARY KEY (id_filma)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".filmovi
+    OWNER to postgres;
+
+-- Trigger: poslednji_unos
+
+-- DROP TRIGGER poslednji_unos ON "VideoKlub".filmovi;
+
+CREATE TRIGGER poslednji_unos
+    BEFORE UPDATE 
+    ON "VideoKlub".filmovi
+    FOR EACH ROW
+    EXECUTE PROCEDURE "VideoKlub".poslednji_unos();
+
+CREATE TABLE "VideoKlub"."kategorija/zanr"
+(
+    id_kategorije integer NOT NULL,
+    naziv_kategorije character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT "kategorija/zanr_pkey" PRIMARY KEY (id_kategorije)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub"."kategorija/zanr"
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".stanje_filmova
+(
+    id_stanja integer NOT NULL,
+    videoklub_id_radnje integer,
+    filmovi_id_filma integer,
+    kolicina integer,
+    CONSTRAINT stanje_filmova_pkey PRIMARY KEY (id_stanja),
+    CONSTRAINT fk_videoklub FOREIGN KEY (videoklub_id_radnje)
+        REFERENCES "VideoKlub".videoklub (id_radnje) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".stanje_filmova
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".status_zaposlenih
+(
+    id_statusa integer NOT NULL,
+    status character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT status_zaposlenih_pkey PRIMARY KEY (id_statusa)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".status_zaposlenih
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".tarife
+(
+    id_tarife integer NOT NULL,
+    tarifa character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    rok_vracanja character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    cena_zamene character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    CONSTRAINT tarife_pkey PRIMARY KEY (id_tarife)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".tarife
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".videoklub
+(
+    id_radnje integer NOT NULL,
+    adresa_lokala text[] COLLATE pg_catalog."default",
+    naziv_lokala text[] COLLATE pg_catalog."default",
+    CONSTRAINT "videoklub(radnja)_pkey" PRIMARY KEY (id_radnje)
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".videoklub
+    OWNER to postgres;
+
+CREATE TABLE "VideoKlub".zaposleni
+(
+    id_zaposleni integer NOT NULL,
+    ime character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    prezime character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    adresa character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    email character varying(45)[] COLLATE pg_catalog."default",
+    br_telefona character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    korisnicko_ime character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    lozinka character varying(45)[] COLLATE pg_catalog."default" NOT NULL,
+    videoklub_id_radnje integer,
+    status_zaposlenih_id_statusa integer,
+    CONSTRAINT zaposleni_pkey PRIMARY KEY (id_zaposleni),
+    CONSTRAINT fk_status_zaposlenih FOREIGN KEY (status_zaposlenih_id_statusa)
+        REFERENCES "VideoKlub".status_zaposlenih (id_statusa) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID,
+    CONSTRAINT "fk_videoklub_(radnja)" FOREIGN KEY (videoklub_id_radnje)
+        REFERENCES "VideoKlub".videoklub (id_radnje) MATCH SIMPLE
+        ON UPDATE NO ACTION
+        ON DELETE NO ACTION
+        NOT VALID
+)
+WITH (
+    OIDS = FALSE
+)
+TABLESPACE pg_default;
+
+ALTER TABLE "VideoKlub".zaposleni
+    OWNER to postgres;
+
+...................................................................................................................................................................................
+...................................................................................................................................................................................
+...................................................................................................................................................................................
+
+INSERT INTO "VideoKlub"."clanovi"(id_clana,ime,prezime,adresa,br_telefona,email,korisnicko_ime,lozinka,datum_uclanjenja,"status(aktivan/inaktivan)","videoklub(radnja)_id_radnje")
+VALUES (2,'{Teodora}','{Sakotic}','{Strazilovska 16}','{064571111}','{tea1@gmail.com}','{teica}','{1234teica}','{2019-02-12}','{aktivan}',1);
+INSERT INTO "VideoKlub"."clanovi"(id_clana,ime,prezime,adresa,br_telefona,email,korisnicko_ime,lozinka,datum_uclanjenja,"status(aktivan/inaktivan)","videoklub(radnja)_id_radnje")
+VALUES (3,'{Ivan}','{Cvetinovic}','{Rudnicka 3}','{064571111}','{ivan1@gmail.com}','{ivan}','{1234teica}','{2019-02-12}','{aktivan}',1);
+INSERT INTO "VideoKlub"."clanovi"(id_clana,ime,prezime,adresa,br_telefona,email,korisnicko_ime,lozinka,datum_uclanjenja,"status(aktivan/inaktivan)","videoklub(radnja)_id_radnje")
+VALUES (4,'{Jakov}','{Djuric}','{Maksima Gorkog 6}','{064571111}','{jakov@gmail.com}','{jak}','{1234jak}','{2011-07-02}','{neaktivan}',2);
+INSERT INTO "VideoKlub"."clanovi"(id_clana,ime,prezime,adresa,br_telefona,email,korisnicko_ime,lozinka,datum_uclanjenja,"status(aktivan/inaktivan)","videoklub(radnja)_id_radnje")
+VALUES (5,'{Petar}','{Miletic}','{Futoska20}','{064571111}','{pet@gmail.com}','{pek}','{1234pet}','{2016-12-13}','{neaktivan}',3);
+INSERT INTO "VideoKlub"."clanovi"(id_clana,ime,prezime,adresa,br_telefona,email,korisnicko_ime,lozinka,datum_uclanjenja,"status(aktivan/inaktivan)","videoklub(radnja)_id_radnje")
+VALUES (6,'{Milenko}','{Markovic}','{Kisacka 2}','{064571111}','{mil@gmail.com}','{mile}','{1234mil}','{2012-04-14}','{aktivan}',3);
+
+
+
+
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (1,'{Orlovi rano lete}',1987,'{Pera Djordjevic}',9,'{opis1}','{Srpski}','{2D}','{01:57:32}',2);
+
+
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (2,'{Titanik}',2000,'{John Johnson}',10,'{opis2}','{Engleski}','{2D}','{02:37:30}',3);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (3,'{Full Metal Jacket}',1987,'{Mike Paterson}',8,'{opis3}','{Engleski}','{2D}','{02:37:30}',3);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (4,'{Tesna Koza 1}',1973,'{Rade Milenkovic}',7,'{opis3}','{Srpski}','{2D}','{01:47:10}',1);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (5,'{Rambo IV}',2006,'{Bob Paulson}',6,'{opis4}','{Engleski}','{3D}','{02:51:55}',4);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (6,'{Gladiator}',2001,'{Dave Willson}',10,'{opis5}','{Engleski}','{2D}','{03:01:20}',5);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (7,'{300}',2007,'{Miguel Jackson}',7,'{opis6}','{Engleski}','{2D}','{02:44:09}',1);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (8,'{Crni Bombarder}',1992,'{Darko Bajic}',10,'{opis7}','{Srpski}','{2D}','{01:56:14}',1);
+INSERT INTO "VideoKlub"."filmovi"(id_filma,naziv,godina_izdanja,reziser,ocena,kratak_opis,jezik,format,duzina_trajanja,"videoklub(radnja)_id_radnje")
+VALUES (9,'{Avatar}',2009,'{James Cameron}',9,'{opis8}','{Engleski}','{3D}','{03:23:01}',2);
+
+
+ALTER TABLE "VideoKlub"."stanje_filmova"
+	ADD CONSTRAINT fk_stanje_filmova
+	FOREIGN KEY (filmovi_id_filma)
+	REFERENCES "VideoKlub"."filmovi" (id_filma);
+
+INSERT INTO "VideoKlub"."kategorija/zanr" (id_kategorije,naziv_kategorije)
+VALUES (2,'{Ljubavni}');
+INSERT INTO "VideoKlub"."kategorija/zanr" (id_kategorije,naziv_kategorije)
+VALUES (3,'{Komedija}');
+INSERT INTO "VideoKlub"."kategorija/zanr" (id_kategorije,naziv_kategorije)
+VALUES (4,'{Akcija}');
+INSERT INTO "VideoKlub"."kategorija/zanr" (id_kategorije,naziv_kategorije)
+VALUES (5,'{Istorijski}');
+INSERT INTO "VideoKlub"."kategorija/zanr" (id_kategorije,naziv_kategorije)
+VALUES (6,'{Drama}');
+
+INSERT INTO "VideoKlub"."tarife" (id_tarife,tarifa,rok_vracanja,cena_zamene)
+VALUES (1,'{300din}','{14dana}','{2000}');
+INSERT INTO "VideoKlub"."tarife" (id_tarife,tarifa,rok_vracanja,cena_zamene)
+VALUES (2,'{200din}','{10dana}','{2000}');
+INSERT INTO "VideoKlub"."tarife" (id_tarife,tarifa,rok_vracanja,cena_zamene)
+VALUES (3,'{150din}','{7dana}','{2000}');
+
+
+CREATE VIEW zanr_filmova AS
+SELECT naziv,godina_izdanja,naziv_kategorije
+FROM "VideoKlub"."filmovi"
+JOIN "VideoKlub"."kategorija/zanr" ON ("filmovi"."kategorija/zanr_id_kategorije" 
+									   = "kategorija/zanr"."id_kategorije");
+SELECT * FROM zanr_filmova;
+
+CREATE TRIGGER belezenje_unosa 
+BEFORE UPDATE ON "VideoKlub"."filmovi" FOR EACH ROW 
+new.poslednji_unos= current_timestamp WHERE id_filma=new.id_filma;
+
+
+CREATE FUNCTION VideoKlub.poslednji_unos() RETURNS trigger 
+	LANGUAGE plpgsql
+	AS $$
+	BEGIN
+	NEW.poslednji_unos=current_timestamp;
+	RETURN NEW;
+END $$;
+
+ALTER FUNCTION VideoKlub.poslednji_unos() OWNER TO postgres;
